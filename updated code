@@ -1,0 +1,395 @@
+import tkinter as ttk
+from tkinter import *
+from tkinter import filedialog, messagebox
+from tkinter import ttk
+import csv
+import pathlib
+
+background = "#FFFFFF"
+framebg = "#EDEDED"
+framefg = "#FFFFFF"
+
+course_map = {
+    'BS CS': 'Bachelor of Science in Computer Science',
+    'BS IT': 'Bachelor of Science in Information Technology',
+    'BS IS': 'Bachelor of Science in Information Systems',
+    'BS CA': 'Bachelor of Science in Computer Application',
+    'BS MATH': 'Bachelor of Science in Mathematics',
+    'BS ELET': 'Bachelor of Science in Electronics Technology',
+    'BS PSYCHOLOGY': 'Bachelor of Science in Psychology'
+}
+
+root = Tk()
+root.title("Student Registration")
+root.geometry('1250x600+200+100')
+root.config(bg=background)
+
+def create_csv(filename):
+    """Create a CSV file if it does not exist and write custom headers."""
+    if not pathlib.Path(filename).exists():
+        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+
+            writer.writerow(["Last Name", "First Name", "Middle Name", "ID Number", "Year Level", "Gender"])
+
+
+create_csv('Students.csv')
+
+def create_csv_course(filename):
+    """Create a CSV file for Course if it does not exist and write custom headers."""
+    if not pathlib.Path(filename).exists():
+        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+
+            writer.writerow(["ID Number", "Course Code", "Course Name"])
+
+
+create_csv_course('Course.csv')
+
+def Exit():
+    root.destroy()
+
+def Search():
+    text = search_var.get()
+    print(text)
+    Clear()
+
+    try:
+
+        with open("Students.csv", newline='') as csvfile:
+            student_reader = csv.reader(csvfile)
+            for row in student_reader:
+                if row[3] == text:
+
+                    LastName.set(row[0])
+                    FirstName.set(row[1])
+                    MiddleName.set(row[2])
+                    IDNumber.set(row[3])
+                    YearLevel.set(row[4])
+                    if row[5] == 'Male':
+                        R1.select()
+                    else:
+                        R2.select()
+
+                    break
+            else:
+                print("ID not found in Students.csv")
+
+        with open("Course.csv", newline='') as csvfile:
+            course_reader = csv.reader(csvfile)
+            for row in course_reader:
+                if row[0] == text:  
+                    
+                    CourseCode.set(row[1]) 
+                    CourseName.set(row[2]) 
+
+                    break
+            else:
+                print("ID not found in Course.csv")
+
+    except Exception as e:
+        print("An error occurred:", e)
+        messagebox.showerror("Error", "An error occurred while searching")
+
+def selection():
+    global gender
+    value=radio.get()
+    if value==1:
+        gender="Male"
+        print(gender)
+    else:
+        gender="Female"
+        print(gender)
+
+def idNumber():
+    try:
+        with open('Students.csv', mode='r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            max_row_value = sum(1 for _ in reader)
+            id_suffix = str(max_row_value + 1).zfill(4)
+            idN.set(id_suffix)
+    except Exception as e:
+        print("An error occurred:", e)
+        idN.set("")
+
+def Clear():
+    LastName.set('')
+    FirstName.set('')
+    MiddleName.set('')
+    IDNumber.set('')
+    YearLevel.set('')
+    CourseCode.set('')
+    CourseName.set('')
+
+def Save():
+    LN = LastName.get()
+    FN = FirstName.get()
+    MN = MiddleName.get()
+    YRLvl = YearLevel.get()
+    idN = IDNumber.get()
+    selection()
+    G = gender  
+    CN = CourseName.get()
+    CC = CourseCode.get()
+
+    try:
+        # Check if the ID number already exists
+        with open('Students.csv', mode='r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if row[3] == idN:
+                    messagebox.showerror("Error", "ID Number already exists!")
+                    return  # Exit the function if ID number already exists
+
+        # If ID number doesn't exist, proceed to save the record
+        with open('Students.csv', mode='a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([LN, FN, MN, idN, YRLvl, G])
+
+        with open('Course.csv', mode='a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([idN, CC, CN])
+
+        Clear()
+
+        messagebox.showinfo("Success", "Information saved successfully!")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+    
+def Update():
+    LN = LastName.get()
+    FN = FirstName.get()
+    MN = MiddleName.get()
+    YRLvl = YearLevel.get()
+    idN = IDNumber.get()
+    selection()
+    G = gender
+    CN = CourseName.get()
+    CC = CourseCode.get()
+
+    try:
+        with open('Students.csv', mode='r', newline='') as csvfile:
+            student_reader = csv.reader(csvfile)
+            rows = list(student_reader)
+
+            for row in rows:
+                if row[3] == idN:
+                    row[0] = LN
+                    row[1] = FN
+                    row[2] = MN
+                    row[3] = idN
+                    row[4] = YRLvl
+                    row[5] = G
+                    break
+
+        with open('Students.csv', mode='w', newline='') as csvfile:
+            student_writer = csv.writer(csvfile)
+            student_writer.writerows(rows)
+
+        print("Updated values in Students.csv:")
+
+        with open('Course.csv', mode='r', newline='') as csvfile:
+            course_reader = csv.reader(csvfile)
+            rows = list(course_reader)
+
+            for row in rows:
+                if row[0] == idN:
+                    row[1] = CC
+                    row[2] = CN
+                    break
+
+        with open('Course.csv', mode='w', newline='') as csvfile:
+            course_writer = csv.writer(csvfile)
+            course_writer.writerows(rows)
+
+        print("Updated values in Course.csv:")
+        print("idN:", idN)
+        print("CN:", CN)
+        print("CC:", CC)
+
+        print("Update successful")
+        messagebox.showinfo("Success", "Record updated successfully!")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+        
+def update_course_name(event):
+    selected_code = set_CourseCode_field.get()
+    if selected_code in course_map:
+        CourseName.set(course_map[selected_code])
+    else:
+        CourseName.set('')
+
+def show_table():
+    table_window = Toplevel()
+    table_window.title("CSV Data Table")
+
+    notebook = ttk.Notebook(table_window)
+    notebook.pack(fill="both", expand=True)
+
+    students_tab = ttk.Frame(notebook)
+    notebook.add(students_tab, text="Students")
+
+    course_tab = ttk.Frame(notebook)
+    notebook.add(course_tab, text="Course")
+
+    students_table = ttk.Treeview(students_tab)
+    students_table.pack(fill="both", expand=True)
+
+    course_table = ttk.Treeview(course_tab)
+    course_table.pack(fill="both", expand=True)
+
+    with open('Students.csv', newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        headers = next(csv_reader)
+
+        students_table['columns'] = headers
+        for header in headers:
+            students_table.heading(header, text=header)
+            students_table.column(header, width=100, anchor='center')
+
+        for row in csv_reader:
+            students_table.insert('', 'end', values=row)
+
+
+    with open('Course.csv', newline='') as csvfile:
+        csv_reader = csv.reader(csvfile)
+
+        headers = next(csv_reader)
+
+        course_table['columns'] = headers
+        for header in headers:
+            course_table.heading(header, text=header)
+            course_table.column(header, width=100, anchor='center')
+
+
+        for row in csv_reader:
+            course_table.insert('', 'end', values=row)
+
+    delete_button = ttk.Button(table_window, text="Delete", command=lambda: delete_row(students_table if notebook.index(notebook.select()) == 0 else course_table))
+    delete_button.pack(side="bottom")
+
+def delete_row(table):
+
+    selected_item = table.focus()
+    if selected_item:
+
+        values = table.item(selected_item, 'values')
+        if values:
+            id_to_delete = values[3]
+
+            table.delete(selected_item)
+
+            delete_row_from_csv("Students.csv", id_to_delete, column_index=3) 
+            delete_row_from_csv("Course.csv", id_to_delete, column_index=0)
+
+def delete_row_from_csv(filename, id_to_delete, column_index):
+    """
+    Delete a row from a CSV file based on a specific IDNumber.
+
+    Parameters:
+        filename (str): The name of the CSV file.
+        id_to_delete (str): The IDNumber to delete.
+        column_index (int): The index of the column containing the IDNumber.
+
+    Returns:
+        None
+    """
+    rows = []
+    with open(filename, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if row[column_index] != id_to_delete:
+                rows.append(row)
+
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(rows)
+
+def delete_row(table):
+
+    selected_item = table.focus()
+    if selected_item:
+
+        values = table.item(selected_item, 'values')
+        if values:
+            id_to_delete = values[0] 
+
+            table.delete(selected_item)
+
+            delete_row_from_csv("Students.csv", id_to_delete, column_index=0) 
+            delete_row_from_csv("Course.csv", id_to_delete, column_index=0)
+
+show_table_button = ttk.Button(root, text="Show Table", command=show_table)
+show_table_button.pack(side=BOTTOM, pady=20)
+
+
+Label(root, text="MSU-IIT", width=10, height= 2, bg="#f0687c", font='arial 10 bold').pack(side=TOP, fill=X)
+Label(root, text="STUDENT REGISTRATION", width=10, height= 2, bg="#c36464", fg='#fff', font='arial 20 bold').pack(side=TOP, fill=X)
+
+search_var=StringVar()
+Entry(root, textvariable=search_var, width=15, bd=2, font="arial 20").place(x=850,y=50)
+search_button=Button(root, text="Search", compound=LEFT, width=10, bg='#68ddfa', font="arial 13 bold", command=Search)
+search_button.place(x=1090,y=53)
+
+Update_button=Button(root, text="Update", width=10,bg="#68ddfa",font="arial 13 bold",command=Update)
+Update_button.place(x=200, y=55)
+
+obj=LabelFrame(root,text="Student Information", font=20,bd=2,width=900,bg="#FFFFFF",fg="#000000",height=350, relief=GROOVE)
+obj.place(x=30,y=150)
+
+Label(obj,text="Last Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=30,y=50)
+Label(obj,text="First Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=30,y=100)
+Label(obj,text="Middle Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=30,y=150)
+Label(obj,text="Year Level:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=30,y=200)
+
+Label(obj,text="ID Number:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=50)
+Label(obj,text="Gender:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=100)
+
+LastName=StringVar()
+LName_entry=Entry(obj, textvariable=LastName,width=20,font="arial 10 bold")
+LName_entry.place(x=160, y=55)
+
+FirstName=StringVar()
+FName_entry=Entry(obj, textvariable=FirstName,width=20,font="arial 10 bold")
+FName_entry.place(x=160, y=105)
+
+MiddleName=StringVar()
+MName_entry=Entry(obj, textvariable=MiddleName,width=20,font="arial 10 bold")
+MName_entry.place(x=160, y=155)
+
+YearLevel = StringVar()
+YearLevel_option = ["1st", "2nd", "3rd", "4th", "Ongoing"]
+set_YearLevel_field = ttk.Combobox(obj, textvariable=YearLevel, values=YearLevel_option, state='readonly')
+set_YearLevel_field.place(x=160, y=200)
+
+IDNumber=StringVar()
+IDNum_entry=Entry(obj, textvariable=IDNumber,width=20,font="arial 10 bold")
+IDNum_entry.place(x=600, y=53)
+
+radio=IntVar()
+R1=Radiobutton(obj,text="Male", variable=radio, value=1,command=selection)
+R1.place(x=570,y=100)
+
+R2=Radiobutton(obj,text="Female", variable=radio, value=2,command=selection)
+R2.place(x=650,y=100)
+
+Label(obj,text="Course Code:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=150)
+Label(obj,text="Course Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=200)
+
+CourseCode = StringVar()
+CourseCode_option = ['BS CS', 'BS IT', 'BS IS', 'BS CA', 'BS MATH', 'BS ELET', 'BS PSYCHOLOGY']
+set_CourseCode_field = ttk.Combobox(root, textvariable=CourseCode, values=CourseCode_option, state='readonly')
+set_CourseCode_field.place(x=650, y=320)
+set_CourseCode_field.bind('<<ComboboxSelected>>', update_course_name)
+
+CourseName=StringVar()
+CourseName_entry=Entry(obj, textvariable=CourseName,width=30,font="arial 10 bold")
+CourseName_entry.place(x=620, y=200)
+
+Button(root, text="Save", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Save).place(x=1000,y=200)
+Button(root, text="Reset", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Clear).place(x=1000,y=300)
+Button(root, text="Exit", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Exit).place(x=1000,y=400)
+
+root.mainloop()
