@@ -453,6 +453,35 @@ def edit_course():
             messagebox.showerror("Error", "Please select a course and enter a new course name.")
 
     Button(edit_course_window, text="Save", command=save_edited_course).pack(pady=10)
+    
+def save_course(course_code, course_name, window):
+    if course_code and course_name:
+        try:
+            # Check if the course code already exists
+            with open('Courses.csv', 'r', newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if row[0] == course_code:
+                        messagebox.showerror("Error", "Course Code already exists!")
+                        return  # Exit the function if course code already exists
+
+            # If course code doesn't exist, proceed to save the course
+            with open('Courses.csv', mode='a', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow([course_code, course_name])
+            messagebox.showinfo("Success", "Course added successfully!")
+
+            window.destroy()  # Close the add course window upon successful addition
+            update_course_combobox()  # Update the course combobox with the new course data
+
+            # Update the course data dictionary with the new course
+            course_data[course_code] = course_name
+
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+    else:
+        messagebox.showerror("Error", "Please enter both Course Code and Course Name.")
+
 
 show_table_button = ttk.Button(root, text="Show Table", command=show_table)
 show_table_button.pack(side=BOTTOM, pady=20)
