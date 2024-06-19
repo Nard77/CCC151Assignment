@@ -34,16 +34,15 @@ def Exit():
     root.destroy()
 
 def Search():
+    global search_index  # Define search_index as global
     text = search_var.get()
-    print(text)
 
     try:
-
         with open("Student.csv", newline='') as csvfile:
             student_reader = csv.reader(csvfile)
-            for row in student_reader:
+            rows = list(student_reader)
+            for index, row in enumerate(rows):
                 if row[3] == text:
-
                     LastName.set(row[0])
                     FirstName.set(row[1])
                     MiddleName.set(row[2])
@@ -53,20 +52,25 @@ def Search():
                         R1.select()
                     else:
                         R2.select()
-                    IDNum_entry.config(state='disabled')
+                    IDNum_entry.config(state='normal')  # Enable the IDNumber entry field
+                    search_index = index  # Store the index of the found record
+
+                    # Update Course Code combobox
+                    if row[6] == 'Unenrolled':
+                        CourseCode.set('')
+                    else:
+                        CourseCode.set(row[6])
 
                     break
             else:
                 print("ID not found in Student.csv")
+                messagebox.showerror("Error", "ID not found in Student.csv")
 
         with open("Courses.csv", newline='') as csvfile:
             course_reader = csv.reader(csvfile)
             for row in course_reader:
-                if row[0] == text:  
-                    
-                    CourseCode.set(row[1]) 
-                    CourseName.set(row[2]) 
-
+                if row[0] == text:
+                    CourseName.set(row[1]) 
                     break
             else:
                 print(" ")
@@ -74,6 +78,7 @@ def Search():
     except Exception as e:
         print("An error occurred:", e)
         messagebox.showerror("Error", "An error occurred while searching")
+
 
 def selection():
     global gender
@@ -178,6 +183,7 @@ def Save():
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 def Update():
+    global search_index  # Define search_index as global
     LN = LastName.get()
     FN = FirstName.get()
     MN = MiddleName.get()
@@ -193,8 +199,14 @@ def Update():
             student_reader = csv.reader(csvfile)
             rows = list(student_reader)
 
+            # Check for duplicate ID numbers
             for row in rows:
-                if row[3] == idN:
+                if row[3] == idN and row != rows[search_index]:
+                    messagebox.showerror("Error", "ID Number already exists!")
+                    return
+
+            for row in rows:
+                if row[3] == rows[search_index][3]:  # Use search_index to find the correct record
                     row[0] = LN
                     row[1] = FN
                     row[2] = MN
@@ -383,6 +395,65 @@ def update_course_combobox():
         course_data = {row[0]: row[1] for row in reader} 
     set_CourseCode_field['values'] = list(course_data.keys())
 
+def edit_course():
+    edit_course_window = Toplevel(root)
+    edit_course_window.title("Edit Course")
+    edit_course_window.geometry("400x200")
+
+    Label(edit_course_window, text="Select Course Code:").pack(pady=5)
+    selected_course_code = StringVar()
+    course_code_combo = ttk.Combobox(edit_course_window, textvariable=selected_course_code, values=list(course_data.keys()), state='readonly')
+    course_code_combo.pack(pady=5)
+
+    Label(edit_course_window, text="Course Name:").pack(pady=5)
+    course_name_entry = Entry(edit_course_window)
+    course_name_entry.pack(pady=5)
+
+    def update_course_name(event):
+        selected_code = selected_course_code.get()
+        if selected_code in course_data:
+            course_name_entry.delete(0, END)
+            course_name_entry.insert(0, course_data[selected_code])
+        else:
+            course_name_entry.delete(0, END)
+
+    course_code_combo.bind('<<ComboboxSelected>>', update_course_name)
+
+    def save_edited_course():
+        new_course_name = course_name_entry.get()
+        course_code = selected_course_code.get()
+        if new_course_name and course_code:
+            try:
+                with open('Courses.csv', 'r', newline='') as csvfile:
+                    rows = list(csv.reader(csvfile))
+
+                with open('Courses.csv', 'w', newline='') as csvfile:
+                    writer = csv.writer(csvfile)
+                    for row in rows:
+                        if row[0] == course_code:
+                            row[1] = new_course_name
+                        writer.writerow(row)
+
+                with open('Student.csv', 'r', newline='') as csvfile:
+                    student_rows = list(csv.reader(csvfile))
+
+                with open('Student.csv', 'w', newline='') as csvfile:
+                    student_writer = csv.writer(csvfile)
+                    for student_row in student_rows:
+                        if student_row[6] == course_code:
+                            student_row[7] = new_course_name
+                        student_writer.writerow(student_row)
+
+                update_course_combobox()
+                messagebox.showinfo("Success", "Course name updated successfully!")
+                edit_course_window.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred: {e}")
+        else:
+            messagebox.showerror("Error", "Please select a course and enter a new course name.")
+
+    Button(edit_course_window, text="Save", command=save_edited_course).pack(pady=10)
+
 show_table_button = ttk.Button(root, text="Show Table", command=show_table)
 show_table_button.pack(side=BOTTOM, pady=20)
 
@@ -451,9 +522,12 @@ CourseName_entry=Entry(obj, textvariable=CourseName,width=30,font="arial 10 bold
 CourseName_entry.place(x=620, y=200)
 set_CourseCode_field.bind('<<ComboboxSelected>>', update_course_name)
 
-Button(root, text="Save", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Save).place(x=1000,y=200)
-Button(root, text="Add Course", width=10,height=2,font="araial 13 bold",bg="lightblue", command=add_course).place(x=1050,y=270)
-Button(root, text="Delete Course", width=12, height=2, font="araial 13 bold", bg="lightblue", command=select_course_to_delete).place(x=1040, y=330)
-Button(root, text="Exit", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Exit).place(x=1000,y=400)
+Button(root, text="Save", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Save).place(x=1000,y=150)
+Button(root, text="Add Course", width=10,height=2,font="araial 13 bold",bg="lightblue", command=add_course).place(x=1050,y=220)
+Button(root, text="Delete Course", width=12, height=2, font="araial 13 bold", bg="lightblue", command=select_course_to_delete).place(x=1040, y=290)
+Button(root, text="Edit Button", width=19,height=2,font="araial 13 bold",bg="lightblue", command=edit_course).place(x=1000,y=360)
+Button(root, text="Exit", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Exit).place(x=1000,y=430)
+
+
 
 root.mainloop()
