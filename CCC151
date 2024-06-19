@@ -508,7 +508,7 @@ R2=Radiobutton(obj,text="Female", variable=radio, value=2,command=selection)
 R2.place(x=650,y=100)
 
 Label(obj,text="Course Code:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=150)
-Label(obj,text="Course Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=200)
+Label(obj,text="Course Name:",font="arial 13 bold",bg="#FFFFFF",fg="#000000").place(x=500,y=1000)
 
 CourseCode = StringVar()
 with open('Courses.csv', 'r', newline='') as csvfile:
@@ -519,7 +519,7 @@ set_CourseCode_field.place(x=650, y=327)
 
 CourseName=StringVar()
 CourseName_entry=Entry(obj, textvariable=CourseName,width=30,font="arial 10 bold")
-CourseName_entry.place(x=620, y=200)
+CourseName_entry.place(x=620, y=1000)
 set_CourseCode_field.bind('<<ComboboxSelected>>', update_course_name)
 
 Button(root, text="Save", width=19,height=2,font="araial 13 bold",bg="lightblue", command=Save).place(x=1000,y=150)
